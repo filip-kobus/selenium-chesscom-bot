@@ -5,6 +5,7 @@ from selenium import webdriver
 from engine import engine
 from selenium.webdriver.common.action_chains import ActionChains
 from time import sleep
+import chromedriver_autoinstaller
 
 black = {"a" : 8,"1" : 1,
         "b" : 7, "2" : 2,
@@ -25,60 +26,44 @@ white = {"a" : 1, "8" : 1,
         "h" : 8, "1" : 8,}
 
 class Bot:
+    chromedriver_autoinstaller.install()
+    PATH = "chromedriver.exe"
+    URL = "https://www.chess.com/pl/login"
 
-    Path = r"config\chromedriver.exe"
-
-    def __init__(self, url = "https://www.chess.com/pl/login", passwd = "", usr = ""):
-        self.passwd = passwd
-        self.usr = usr
+    def __init__(self, url=URL, password="", email=""):
+        self.password = password
+        self.email = email
         self.url = url
-        self.driver = webdriver.Chrome(self.Path)
+        self.driver = webdriver.Chrome(self.PATH)
         self.card = self.driver.get(self.url)
         self.driver.maximize_window()
 
-    def openPage(self):
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "username"))).send_keys(self.usr)
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "password"))).send_keys(self.passwd)
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "login"))).click()
+    def log_in(self):
         try:
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-               (By.CSS_SELECTOR, "button[class^='accept-button']"))).click()
-        except:
-            pass
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, "//input[@type='email']"))).send_keys(self.email)
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, "//input[@type='password']"))).send_keys(self.password)
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, "//button[@type='submit']"))).click()
+        except Exception:
+            print("Unable to log in. Do it manually.")
 
-    def BotOrLive(self):
-        c1 = self.driver.find_elements_by_id("board-layout-chessboard")
-        c2 = self.driver.find_elements_by_id("board-vs-personalities")
-        c3 = self.driver.find_elements_by_css_selector("span[class='icon-font-chess circle-gearwheel daily-game-footer-icon']")
-        c4 = self.driver.find_elements_by_css_selector("a[class='eco-opening-text']")
-        if len(c1) > len(c2) and len(c3) < 1:
-            return "live"
-        elif len(c3) == 1:
-            return  "daily"
-        elif len(c2) == 1:
-            return "bot"
-        elif len(c4) == 0:
-            return None
-        else:
-            return None
+    def is_bot_or_live(self):
+        bot = self.driver.find_elements(By.XPATH, "//wc-chess-board[@id='board-play-computer']")
+        live = self.driver.find_elements(By.XPATH, "//wc-chess-board[@id='board-single']")
+        if len(bot) > 0:
+            return 'bot'
+        elif len(live) > 0:
+            return 'live'
+        return None
 
-    def BlackOrWhite(self):
-        cords = self.driver.find_elements_by_css_selector("text[class^='coordinate-']")
-        if len(cords) == 0:
-            return None
-        if cords[8].text == "a":
-            return "white"
-        else: return "black"
+    def is_game_ended(self):
+        c = 0
+        c += self.driver.find_elements(By.XPATH, "//span[@class='undo']")
+        c += self.driver.find_elements(By.XPATH, "//button[@class='chevron-right']")
+        if c == 0:
+            return False
+        return True
 
-    def checkIfGameEnd(self):
-        c1 = self.driver.find_elements_by_css_selector("span[class$='undo']")
-        c2 = self.driver.find_elements_by_css_selector("span[class$='arrow-right']")
-        if len(c1) < 1 and len(c2) < 1:
-            return True  #game didn't end
-        else:
-            return False #game ended
-
-    def whiteOrBlackMove(self, colour):
+    def white_or_black_move(self, colour):
         w = self.driver.find_elements_by_css_selector("div[class='black node selected']")
         b = self.driver.find_elements_by_css_selector("div[class='white node selected']")
         wn = self.driver.find_elements_by_css_selector("div[class='white node']")

@@ -1,0 +1,14 @@
+{
+    "Rstockfishlevelcheck": true,
+    "Rmovesaheadcheck": true,
+    "AutoMove": true,
+    "RThinkingTime": true,
+    "StockFishlevel": 25,
+    "MovesAhead": 21,
+    "RSLFROM": 1,
+    "RSLTO": 25,
+    "RMAFROM": 1,
+    "RMATO": 18,
+    "thinkingTime": 240,
+    "color": "White"
+}
