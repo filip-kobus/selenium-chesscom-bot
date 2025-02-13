@@ -255,7 +255,7 @@ class Bot:
 
 
 if __name__ == "__main__":
-    bot = Bot(email="fkobus.coding@gmail.com", password="Krumcia13")
+    bot = Bot(email="", password="")
     bot.log_in()
     while True:
         input()
