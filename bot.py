@@ -2,41 +2,28 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
-from engine import engine
+from engine import Engine
 from selenium.webdriver.common.action_chains import ActionChains
 from time import sleep
 import chromedriver_autoinstaller
 
-black = {"a" : 8,"1" : 1,
-        "b" : 7, "2" : 2,
-        "c" : 6, "3" : 3,
-        "d" : 5, "4" : 4,
-        "e" : 4, "5" : 5,
-        "f" : 3, "6" : 6,
-        "g" : 2, "7" : 7,
-        "h" : 1, "8" : 8,}
-
-white = {"a" : 1, "8" : 1,
-        "b" : 2, "7" : 2,
-        "c" : 3, "6" : 3,
-        "d" : 4, "5" : 4,
-        "e" : 5, "4" : 5,
-        "f" : 6, "3" : 6,
-        "g" : 7, "2" : 7,
-        "h" : 8, "1" : 8,}
+import chess
 
 class Bot:
     chromedriver_autoinstaller.install()
     PATH = "chromedriver.exe"
     URL = "https://www.chess.com/pl/login"
 
-    def __init__(self, url=URL, password="", email=""):
+    def __init__(self, url=URL, password="", email="", color="w"):
         self.password = password
         self.email = email
         self.url = url
         self.driver = webdriver.Chrome(self.PATH)
         self.card = self.driver.get(self.url)
         self.driver.maximize_window()
+        self.pieces = set()
+        self.castling_availability_fen = "KQkq"
+        self.my_color = color
 
     def log_in(self):
         try:
@@ -46,130 +33,205 @@ class Bot:
         except Exception:
             print("Unable to log in. Do it manually.")
 
-    def is_bot_or_live(self):
-        bot = self.driver.find_elements(By.XPATH, "//wc-chess-board[@id='board-play-computer']")
-        live = self.driver.find_elements(By.XPATH, "//wc-chess-board[@id='board-single']")
-        if len(bot) > 0:
-            return 'bot'
-        elif len(live) > 0:
-            return 'live'
-        return None
+    def get_fen_of_current_state(self):
+        board = self.get_board()
+        board_fen = self.board_to_fen(board)
+        castling_fen = self.castling_availability_to_fen()
+        color_fen = self.my_color
+        if not self.is_bot():
+            player_clock = self.driver.find_elements(By.XPATH, "//div[contains(@class, 'clock-player-turn')]")
+            if len(player_clock) == 0:
+                raise Exception("You are not in game!")
+            if "white" in player_clock[0].get_attribute("class"):
+                color_fen = "w"
+            else:
+                color_fen = "b"
+        else:
+            sleep(2)
+        if self.has_anyone_moved():
+            return self.get_fen_of_current_state()
+        return f"{board_fen} {color_fen} {castling_fen} - 0 1"
 
-    def is_game_ended(self):
-        c = 0
-        c += self.driver.find_elements(By.XPATH, "//span[@class='undo']")
-        c += self.driver.find_elements(By.XPATH, "//button[@class='chevron-right']")
-        if c == 0:
-            return False
+    def is_bot(self):
+        bot = self.driver.find_elements(By.XPATH, "//wc-chess-board[@id='board-play-computer']")
+        if len(bot) > 0:
+            return True
+        return False
+
+    def has_game_ended(self):
+        return bool(self.driver.find_elements(By.XPATH, "//span[contains(@class, 'undo')]"))
+
+    def get_board(self):
+        # pieces in format "piece br square-88"
+        board = [[" " for _ in range(8)] for _ in range(8)]
+        pieces = self.get_list_of_pieces()
+        for piece in pieces:
+            piece_info = piece.split(" ")
+            piece_info.sort(key=len)
+
+            piece_name = piece_info[0]
+            color = piece_name[0]
+            figure = piece_name[1]
+
+            piece_postion = piece_info[2].split("-")[1]
+            column = int(piece_postion[0]) - 1
+            row = int(piece_postion[1]) - 1
+            board[7-row][column] = figure if color == 'b' else figure.upper()
+        return board
+
+    def board_to_fen(self, board):
+        fen_rows = []
+
+        for row in board:
+            empty_count = 0
+            fen_row = ""
+            for cell in row:
+                if cell == " ":
+                    empty_count += 1
+                else:
+                    if empty_count > 0:
+                        fen_row += str(empty_count)
+                        empty_count = 0
+                    fen_row += cell
+            if empty_count > 0:
+                fen_row += str(empty_count)
+            fen_rows.append(fen_row)
+    
+        fen_board = "/".join(fen_rows)
+
+        return fen_board
+
+    def has_anyone_moved(self):
+        pieces = self.get_list_of_pieces()
+        if pieces != self.pieces:
+            sleep(0.1)
+            pieces = self.get_list_of_pieces()
+            if len(self.pieces) != 0:
+                added = self.pieces - pieces
+                removed = pieces - self.pieces
+                print(self.what_move_was_made(self.pieces, pieces))
+            self.pieces = pieces
+            return True
+        return False
+    
+    def what_move_was_made(self, previous_pieces, next_pieces):
+        added_pieces = list(next_pieces - previous_pieces)
+        removed_pieces = list(previous_pieces - next_pieces)
+
+        castling = self.check_if_move_was_castling(added_pieces, removed_pieces)
+        if castling is not None:
+            return castling
+        if len(added_pieces) + len(removed_pieces) > 3:
+            return None
+            # wczytaj plansze jeszcze raz
+
+        added = added_pieces[0].split()
+        
+        added.sort(key=len)
+        figure = added[0]
+        for piece in removed_pieces:
+            piece_info = piece.split()
+            piece_info.sort(key=len)
+            if piece_info[0] == figure:
+                removed = piece_info
+        
+        move_to = added[2].split("-")[1]
+        move_from = removed[2].split("-")[1]
+
+        return self.board_notation_to_algebraic(move_from, move_to)
+
+    def check_if_move_was_castling(self, added, removed):
+        if len(added) + len(removed) != 4:
+            return None
+        
+        kings = [piece for piece in removed if "wk" in piece or "bk" in piece]
+        rooks = [piece for piece in removed if "wr" in piece or "br" in piece]
+
+        if len(kings) == 1 and len(rooks) == 1:
+            king_piece = kings[0]
+            rook_piece = rooks[0]
+            print(f"king:{king_piece}")
+            print(f"rook:{rook_piece}")
+            
+            king_square = king_piece.split('-')[-1][0]
+            rook_square = rook_piece.split('-')[-1][0]
+            if abs(int(king_square) - int(rook_square)) > 3:
+                return "O-O-O"
+            return "O-O"
+
+
+    def board_notation_to_algebraic(self, move_from, move_to):
+        translation = {
+        '1': 'a', '2': 'b', '3': 'c', '4': 'd',
+        '5': 'e', '6': 'f', '7': 'g', '8': 'h'
+        }
+        return f"{translation[move_from[0]]}{move_from[1]}{translation[move_to[0]]}{move_to[1]}"
+        
+    def is_begining_of_game(self):
+        pieces = self.pieces
+        for piece in pieces:
+            row = int(piece[-1])
+            if 2 < row < 7:
+                return False
         return True
 
-    def white_or_black_move(self, colour):
-        w = self.driver.find_elements_by_css_selector("div[class='black node selected']")
-        b = self.driver.find_elements_by_css_selector("div[class='white node selected']")
-        wn = self.driver.find_elements_by_css_selector("div[class='white node']")
+    def decide_who_made_move(self, added, removed):
+        black, white = 0, 0
+        for piece in added | removed:
+            piece_info = piece.split()
+            piece_info.sort(key=len)
+            if piece_info[0][0] == 'b':
+                black += 1 
+            elif piece_info[0][0] == 'w':
+                white += 1
 
-        if (colour == "white" and len(w) > 0) or (colour == "white" and len(wn) == 0 and len(b) == 0):
-            return True
-        elif colour == "white" and len(w) == 0:
-            return False
-        elif colour != "white" and len(b) > 0:
-            return True
-        elif colour != "white" and len(b) == 0:
-            return False
+        if black > white:
+            return "w"
+        elif white > black:
+            return "b"
 
-    def getPosition(self):
-        black = self.driver.find_elements_by_css_selector("div[class='black node selected']")
-        white = self.driver.find_elements_by_css_selector("div[class='white node selected']")
-        if len(black) > len(white):
-            var = black
-        elif len(black) < len(white):
-            var = white
-        else: return None
-        elem = var[0].find_elements_by_css_selector("span[class^='icon-font']")
-        if len(elem) > 0:
-            if "=" in var[0].text:
-                string = ''
-                figurine = str(elem[0].get_attribute("data-figurine"))
-                for i2 in range(len(var[0].text)):
-                    string += var[0].text[i2]
-                    if var[0].text[i2] == "=":
-                        string += figurine
-                return string
-            else:
-                if "None" in str(elem[0].get_attribute("data-figurine")):
-                    return var[0].text
-                else:
-                    return str(elem[0].get_attribute("data-figurine")) + var[0].text
-        else:
-            return var[0].text
+        return self.player_color
 
-    def movesBeforeLaunch(self):
-        list = []
-        moves = self.driver.find_elements_by_css_selector("div[class$='node']")
-        for i in range(len(moves)):
-            elem = moves[i].find_elements_by_css_selector("span[class^='icon-font']")
-            if len(elem) > 0:
-                if "=" in moves[i].text:
-                    string = ''
-                    figurine = str(elem[0].get_attribute("data-figurine"))
-                    for i2 in range(len(moves[i].text)):
-                        string += moves[i].text[i2]
-                        if moves[i].text[i2] == "=":
-                            string += figurine
-                    list.append(string)
-                else:
-                    list.append(str(elem[0].get_attribute("data-figurine")) + moves[i].text)
-            else:
-                list.append(moves[i].text)
-        return list
+    def castling_availability_to_fen(self):
+        expected_pieces_positions = {
+            "bk":("58",),
+            "br":("18", "88"),
+            "wk":("51",),
+            "wr":("11", "81")
+        }
 
-    def pickFigurine(self, mode):
-        if mode == "bot":
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                (By.XPATH, "/html/body/div[4]/div[4]/div[1]/a[3]"))).click()
+        fen_castling = list("KQkq")
+        index_at_fen_castling = {
+            "81":[0],
+            "11":[1],
+            "88":[2],
+            "18":[3],
+            "58":[2,3],
+            "51":[0,1]
+        }
+        
+        self.pieces = self.get_list_of_pieces()
+        pieces = self.pieces
+        current_positions = {piece[16:18] for piece in pieces}
 
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                (By.XPATH,
-                 "/html/body/div[2]/div[9]/div/div[2]/div/div[2]/div/div[5]/div/select/option[1]"))).click()
+        for piece_type, expected_positions in expected_pieces_positions.items():
+            for position in expected_positions:
+                if position not in current_positions:
+                    indexes = index_at_fen_castling.get(position, [])
+                    for index in indexes:
+                        fen_castling[index] = '-'
 
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "div[class^='ui_icon-font-component icon-font-chess x modal-close']"))).click()
+        return "".join(fen_castling)
 
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                (By.XPATH, "/html/body/div[4]/div[4]/div[1]/a[3]"))).click()
-
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                (By.XPATH,
-                 "/html/body/div[2]/div[9]/div/div[2]/div/div[2]/div/div[5]/div/select/option[2]"))).click()
-
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "div[class^='ui_icon-font-component icon-font-chess x modal-close']"))).click()
-
-        else:
-            for i in range(1,3):
-                WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, "button[class^='icon-font-chess circle-gearwheel']"))).click()
-
-                if i == 1:
-                    value = "text"
-                else: value = "figurine"
-
-                WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                    (By.CSS_SELECTOR,
-                     "option[value ='"+value+"']"))).click()
-
-                elem = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                    (By.CSS_SELECTOR,
-                     "button[class^='ui_v5-button-component ui_v5-button-primary settings-modal-container-button']")))
-
-                if elem.get_attribute("disabled") == "true":
-                    WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                        (By.CSS_SELECTOR,
-                         "button[class^='ui_v5-button-component ui_v5-button-basic-light settings-modal-container-button']"))).click()
-                else:
-                    WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-                        (By.CSS_SELECTOR,
-                         "button[class^='ui_v5-button-component ui_v5-button-primary settings-modal-container-button']"))).click()
+    def get_list_of_pieces(self):
+        pieces_info = self.driver.find_elements(By.XPATH, "//div[contains(concat(' ', normalize-space(@class), ' '), ' piece ')]")
+        pieces = set()
+        if len(pieces_info) > 0:         
+            for element in pieces_info:
+                piece = element.get_attribute("class").removesuffix(" dragging")
+                if piece != "element-pool":
+                    pieces.add(piece)
+        return pieces
 
     def Move(self, move, colour, mode):
         ac = ActionChains(self.driver)
@@ -193,4 +255,8 @@ class Bot:
 
 
 if __name__ == "__main__":
-    pass
+    bot = Bot(email="fkobus.coding@gmail.com", password="Krumcia13")
+    bot.log_in()
+    while True:
+        input()
+        print(bot.get_fen_of_current_state())
