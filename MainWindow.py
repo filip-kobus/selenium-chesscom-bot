@@ -4,12 +4,13 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from bot import Bot
 import threading
-from engine import engine
+from engine import Engine
 from time import sleep
 from random import randint
 import win32.lib.win32con as win32con
 import win32gui
 from app import Ui_MainWindow
+from MainThread import Worker
 
 class MainWindow:
     change_text = pyqtSignal(str)
@@ -61,9 +62,9 @@ class MainWindow:
 
     def save_settings(self):
         if self.ui.whiteButton.isChecked():
-            color = "White"
+            color = "w"
         else:
-            color = "Black"
+            color = "b"
         
         settings = {
             "Rstockfishlevelcheck": self.ui.Rstockfishlevelcheck.isChecked(),
@@ -87,33 +88,26 @@ class MainWindow:
 
     def start_bot(self):
         settings = self.save_settings()
-        status = self.bot.is_bot_or_live()
-        if status is None:
+        if not self.bot.is_in_game():
             eGame = QMessageBox()
             eGame.setIcon(QMessageBox.Information)
             eGame.about(self.ui.stackedWidget, "ERROR", "You are not in game, start the game to run bot")
             return None
-        color = settings['color']
         self.ui.stackedWidget.setCurrentWidget(self.ui.GamePage)
-        self.worker = Worker(status, color, settings)
+        self.worker = Worker(self.bot, settings)
         self.worker.start()
-        self.worker.move.connect(self.move)
-        self.worker.end.connect(self.SettingsPage)
-        self.worker.timeToMove.connect(self.timeToMove)
-        self.worker.clear.connect(self.timeToMove)
+        self.worker.move_signal.connect(self.show_move)
+        # self.worker.end_signal.connect(self.ui.SettingsPage)
+        self.worker.timeToMove_signal.connect(self.show_time_to_move)
 
     def show_move(self, move):
         self.ui.moveLabel.setText(move)
 
-    def stop(self):
-        with open('config/end.txt', 'w')  as f:
-            f.write("end")
-
     def show_time_to_move(self, time):
-        if time == "True":
-            self.ui.timeLabel.setText("")
-        else:
+        if time is not None:
             self.ui.timeToMove.setText(str(time)+" s")
+            return
+        self.ui.timeLabel.setText("")            
 
     def back_to_settings_page(self):
         self.ui.BestMove.setText("")
@@ -169,146 +163,6 @@ class MainWindow:
 
     def show(self):
         self.main_win.show()
-
-class Worker(QThread):
-    move = pyqtSignal(str)
-    end = pyqtSignal(bool)
-    timeToMove = pyqtSignal(int)
-    clear = pyqtSignal(str)
-
-    def __init__(self, mode, color, settings):
-        super().__init__()
-        self.settings = settings
-        self.mode = mode
-        self.color = color
-        self.isRSL = settings["Rstockfishlevelcheck"]
-        self.isRMA = settings["Rmovesaheadcheck"]
-        self.isautomves = settings["AutoMove"]
-        self.isRTT = settings["RThinkingTime"]
-        self.stockfishlevel = settings["Rstockfishlevelcheck"]
-        self.movesahead = settings["MovesAhead"]
-        self.thinkingtime = settings["thinkingTime"]
-        self.running = True
-        self.engine = None
-
-
-    def run(self):
-        try:
-            self.engine = engine(self.stockfishlevel, self.movesahead)
-            self.engine.clearBoard()
-            try:
-                moves = bot.movesBeforeLaunch()
-                self.engine.setPosition(moves)
-            except:
-                bot.pickFigurine(self.mode)
-                e.clearBoard()
-                sleep(1)
-                moves = bot.movesBeforeLaunch()
-                e.setPosition(moves)
-
-            while bot.checkIfGameEnd() is True and readFile() is False:
-                var = 0
-                
-                if bot.whiteOrBlackMove(self.color  ) is True:
-                    while True:
-                        if var < 1:
-                            var += 1
-                            if bot.getPosition() is None:
-                                if self.isRSL == "True" or self.isRMA == "True":
-                                    e = self.setArgs(self.isRSL, self.isRMA)
-                                move = e.firstMove()
-                                if self.isautomves == "True":
-                                    self.delay(self.isRTT, self.thinkingtime, move)
-                                    bot.Move(move, self.color, self.mode)
-                                    e.getData()
-                                else:
-                                    self.move.emit(move)
-                            else:
-                                if self.isRSL == "True" or self.isRMA == "True":
-                                    e = self.setArgs(self.isRSL, self.isRMA)
-                                try:
-                                    move = e.BestMove(bot.getPosition())
-                                except:
-                                    print(Exception)
-                                    bot.pickFigurine(self.mode)
-                                    sleep(1)
-                                    move = e.BestMove(bot.getPosition())
-                                if self.isautomves == "True":
-                                    self.delay(self.isRTT, self.thinkingtime, move)
-                                    bot.Move(move, self.color, self.mode)
-                                    e.getData()
-                                else:
-                                    self.move.emit(move)
-                                    e.getData()
-                        if bot.checkIfGameEnd() is False or readFile() is True :
-                            break
-                        if bot.whiteOrBlackMove(self.color) is False:
-                            try:
-                                e.BestMove(bot.getPosition())
-                            except:
-                                print(Exception)
-                                bot.pickFigurine(self.mode)
-                                sleep(1)
-                                e.BestMove(bot.getPosition())
-                            break
-            self.end.emit(True)
-        except Exception as exe:
-            print(exe)
-            self.end.emit(True)
-
-    def stop(self):
-        self.running = False
-        self.wait()
-
-    def randomInt(self, v1, v2):
-        if v1 > v2:
-            return randint(v2, v1)
-        elif v1 < v2:
-            return  randint(v1, v2)
-        else:
-            return v1
-
-    def setOrRandom(self, level, isRandom, randomVal):
-        if isRandom == "True":
-            return randomVal
-        else:
-            return level
-
-    def thinkingTime(self, value, isRandom):
-        if isRandom == "True":
-            return randint(1, value)
-        else:
-            return  value
-
-    def delay(self, isRandom, time, move):
-        if isRandom == "True":
-            x = randint(0, time)
-        else:
-            x = time
-        if x == 1:
-            self.move.emit(move)
-            self.timeToMove.emit(1)
-            sleep(1)
-        elif x == 0:
-            self.move.emit(move)
-        for i in range(x-1):
-            if i == 0:
-                self.move.emit(move)
-            self.timeToMove.emit(x-i-1)
-            sleep(1)
-        self.clear.emit("True")
-
-    def setArgs(self, isRSL, isRMA):
-        self.randomstockfishlevel = self.randomInt(self.settings[6], self.settings[7])
-        self.randommovesahead = self.randomInt(self.settings[8], self.settings[9])
-        if isRSL == "True" and isRMA == "False":
-            return engine(self.randomstockfishlevel, self.movesahead)
-
-        elif isRSL == "False" and isRMA == "True":
-            return engine(self.stockfishlevel, self.randommovesahead)
-
-        elif isRSL == "True" and isRMA == "True":
-            return engine(self.randomstockfishlevel, self.randommovesahead)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

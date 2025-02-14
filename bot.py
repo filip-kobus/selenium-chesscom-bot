@@ -14,7 +14,7 @@ class Bot:
     PATH = "chromedriver.exe"
     URL = "https://www.chess.com/pl/login"
 
-    def __init__(self, url=URL, password="", email="", color="w"):
+    def __init__(self, url=URL, password="", email=""):
         self.password = password
         self.email = email
         self.url = url
@@ -23,7 +23,8 @@ class Bot:
         self.driver.maximize_window()
         self.pieces = set()
         self.castling_availability_fen = "KQkq"
-        self.my_color = color
+        self.my_color = "w"
+        self.current_color = None
 
     def log_in(self):
         try:
@@ -47,14 +48,21 @@ class Bot:
             else:
                 color_fen = "b"
         else:
-            sleep(2)
+            pass
         if self.has_anyone_moved():
             return self.get_fen_of_current_state()
+        self.current_color = color_fen
         return f"{board_fen} {color_fen} {castling_fen} - 0 1"
 
     def is_bot(self):
         bot = self.driver.find_elements(By.XPATH, "//wc-chess-board[@id='board-play-computer']")
         if len(bot) > 0:
+            return True
+        return False
+
+    def is_in_game(self):
+        in_game = self.driver.find_elements(By.XPATH, "//wc-chess-board[@class='board']")
+        if len(in_game) > 0:
             return True
         return False
 
@@ -102,6 +110,7 @@ class Bot:
         return fen_board
 
     def has_anyone_moved(self):
+        move = None
         pieces = self.get_list_of_pieces()
         if pieces != self.pieces:
             sleep(0.1)
@@ -109,10 +118,10 @@ class Bot:
             if len(self.pieces) != 0:
                 added = self.pieces - pieces
                 removed = pieces - self.pieces
-                print(self.what_move_was_made(self.pieces, pieces))
+                move = self.what_move_was_made(self.pieces, pieces)
             self.pieces = pieces
-            return True
-        return False
+            return move
+        return move
     
     def what_move_was_made(self, previous_pieces, next_pieces):
         added_pieces = list(next_pieces - previous_pieces)
@@ -122,8 +131,7 @@ class Bot:
         if castling is not None:
             return castling
         if len(added_pieces) + len(removed_pieces) > 3:
-            return None
-            # wczytaj plansze jeszcze raz
+            raise Exception
 
         added = added_pieces[0].split()
         
@@ -135,6 +143,7 @@ class Bot:
             if piece_info[0] == figure:
                 removed = piece_info
         
+        self.current_color = figure[1]
         move_to = added[2].split("-")[1]
         move_from = removed[2].split("-")[1]
 
@@ -219,9 +228,10 @@ class Bot:
                 if position not in current_positions:
                     indexes = index_at_fen_castling.get(position, [])
                     for index in indexes:
-                        fen_castling[index] = '-'
+                        fen_castling[index] = ''
 
-        return "".join(fen_castling)
+        result = "".join(fen_castling)
+        return result if result else "-"
 
     def get_list_of_pieces(self):
         pieces_info = self.driver.find_elements(By.XPATH, "//div[contains(concat(' ', normalize-space(@class), ' '), ' piece ')]")
@@ -232,6 +242,9 @@ class Bot:
                 if piece != "element-pool":
                     pieces.add(piece)
         return pieces
+
+    def set_my_color(self, color):
+        self.my_color = color
 
     def Move(self, move, colour, mode):
         ac = ActionChains(self.driver)
