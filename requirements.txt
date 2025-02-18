@@ -1,4 +1,4 @@
-stockfish==3.14.0
+stockfish
 selenium==3.8.1
 chess==1.5.0
 PyQt5

@@ -14,15 +14,26 @@ class Engine:
         move_obj = chess.Move.from_uci(move)
         self.board.push(move_obj)
 
+    def is_move_possible(self, move):
+        move_obj = chess.Move.from_uci(move)
+        if move_obj in self.board.legal_moves:
+            return True
+        return False
 
     def get_best_move(self):
         fen = self.board.fen()
         self.stockfish.set_fen_position(fen)
-        move = self.stockfish.get_best_move_time(300)
+        move = self.stockfish.get_best_move_time(500)
         return move
 
-    def get_parameters(self):
-        print(self.stockfish.get_parameters())
+    def change_parameters(self, stockfish_level, move_overhead):
+        self.stockfish.update_engine_parameters({
+            'Skill Level': stockfish_level,
+            'Move Overhead': move_overhead
+        })
+
+    def whose_move_is(self):
+        return "w" if self.board.turn == chess.WHITE else "b"
 
 if __name__ == "__main__":
     pass

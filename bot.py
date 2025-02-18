@@ -14,17 +14,17 @@ class Bot:
     PATH = "chromedriver.exe"
     URL = "https://www.chess.com/pl/login"
 
-    def __init__(self, url=URL, password="", email=""):
+    def __init__(self, url=URL, password="", email="", player_color="w"):
         self.password = password
         self.email = email
         self.url = url
         self.driver = webdriver.Chrome(self.PATH)
         self.card = self.driver.get(self.url)
         self.driver.maximize_window()
-        self.pieces = set()
+        self.previous_pieces = set()
+        self.current_pieces = set()
         self.castling_availability_fen = "KQkq"
-        self.my_color = "w"
-        self.current_color = None
+        self.my_color = player_color
 
     def log_in(self):
         try:
@@ -33,6 +33,9 @@ class Bot:
             WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, "//button[@type='submit']"))).click()
         except Exception:
             print("Unable to log in. Do it manually.")
+
+    def set_color(self, color):
+        self.my_color = color
 
     def get_fen_of_current_state(self):
         board = self.get_board()
@@ -48,10 +51,12 @@ class Bot:
             else:
                 color_fen = "b"
         else:
-            pass
-        if self.has_anyone_moved():
+            color_fen = self.my_color
+        try :
+            if self.has_anyone_moved():
+                return self.get_fen_of_current_state()
+        except ValueError:
             return self.get_fen_of_current_state()
-        self.current_color = color_fen
         return f"{board_fen} {color_fen} {castling_fen} - 0 1"
 
     def is_bot(self):
@@ -61,13 +66,15 @@ class Bot:
         return False
 
     def is_in_game(self):
-        in_game = self.driver.find_elements(By.XPATH, "//wc-chess-board[@class='board']")
+        in_game = self.driver.find_elements(By.XPATH, "//wc-chess-board[contains(@class, 'board')]")
         if len(in_game) > 0:
             return True
         return False
 
     def has_game_ended(self):
-        return bool(self.driver.find_elements(By.XPATH, "//span[contains(@class, 'undo')]"))
+        c1 = bool(self.driver.find_elements(By.XPATH, "//span[contains(@class, 'undo')]"))
+        c2 = bool(self.driver.find_elements(By.XPATH, "//span[contains(@class, 'redo')]"))
+        return c1 or c2
 
     def get_board(self):
         # pieces in format "piece br square-88"
@@ -127,11 +134,8 @@ class Bot:
         added_pieces = list(next_pieces - previous_pieces)
         removed_pieces = list(previous_pieces - next_pieces)
 
-        castling = self.check_if_move_was_castling(added_pieces, removed_pieces)
-        if castling is not None:
-            return castling
-        if len(added_pieces) + len(removed_pieces) > 3:
-            raise Exception
+        if len(added_pieces) + len(removed_pieces) != 2:
+            raise ValueError
 
         added = added_pieces[0].split()
         
@@ -143,30 +147,10 @@ class Bot:
             if piece_info[0] == figure:
                 removed = piece_info
         
-        self.current_color = figure[1]
         move_to = added[2].split("-")[1]
         move_from = removed[2].split("-")[1]
 
         return self.board_notation_to_algebraic(move_from, move_to)
-
-    def check_if_move_was_castling(self, added, removed):
-        if len(added) + len(removed) != 4:
-            return None
-        
-        kings = [piece for piece in removed if "wk" in piece or "bk" in piece]
-        rooks = [piece for piece in removed if "wr" in piece or "br" in piece]
-
-        if len(kings) == 1 and len(rooks) == 1:
-            king_piece = kings[0]
-            rook_piece = rooks[0]
-            print(f"king:{king_piece}")
-            print(f"rook:{rook_piece}")
-            
-            king_square = king_piece.split('-')[-1][0]
-            rook_square = rook_piece.split('-')[-1][0]
-            if abs(int(king_square) - int(rook_square)) > 3:
-                return "O-O-O"
-            return "O-O"
 
 
     def board_notation_to_algebraic(self, move_from, move_to):
@@ -183,23 +167,6 @@ class Bot:
             if 2 < row < 7:
                 return False
         return True
-
-    def decide_who_made_move(self, added, removed):
-        black, white = 0, 0
-        for piece in added | removed:
-            piece_info = piece.split()
-            piece_info.sort(key=len)
-            if piece_info[0][0] == 'b':
-                black += 1 
-            elif piece_info[0][0] == 'w':
-                white += 1
-
-        if black > white:
-            return "w"
-        elif white > black:
-            return "b"
-
-        return self.player_color
 
     def castling_availability_to_fen(self):
         expected_pieces_positions = {

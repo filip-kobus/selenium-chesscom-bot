@@ -14,6 +14,24 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>490</width>
+     <height>639</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>490</width>
+     <height>639</height>
+    </size>
+   </property>
    <widget class="QStackedWidget" name="stackedWidget">
     <property name="geometry">
      <rect>
@@ -75,6 +93,12 @@
      </widget>
     </widget>
     <widget class="QWidget" name="GamePage">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="font">
       <font>
        <weight>75</weight>
@@ -84,9 +108,9 @@
      <widget class="QLabel" name="moveLabel">
       <property name="geometry">
        <rect>
-        <x>130</x>
+        <x>0</x>
         <y>100</y>
-        <width>231</width>
+        <width>491</width>
         <height>121</height>
        </rect>
       </property>
@@ -99,6 +123,9 @@
       </property>
       <property name="text">
        <string>E2E4</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
      <widget class="QPushButton" name="stop">
@@ -132,6 +159,9 @@
       </property>
       <property name="text">
        <string>5</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </widget>
@@ -267,6 +297,12 @@ just log in manually on page</string>
      </widget>
     </widget>
     <widget class="QWidget" name="LoadingPage">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <widget class="QLabel" name="LoadingLabel">
       <property name="geometry">
        <rect>
@@ -288,6 +324,18 @@ just log in manually on page</string>
      </widget>
     </widget>
     <widget class="QWidget" name="SettingsPage">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>491</width>
+       <height>641</height>
+      </size>
+     </property>
      <widget class="QLabel" name="label_3">
       <property name="geometry">
        <rect>

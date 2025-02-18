@@ -1,14 +1,14 @@
 {
-    "Rstockfishlevelcheck": true,
-    "Rmovesaheadcheck": true,
+    "Rstockfishlevelcheck": false,
+    "Rmovesaheadcheck": false,
     "AutoMove": true,
-    "RThinkingTime": true,
+    "RThinkingTime": false,
     "StockFishlevel": 25,
     "MovesAhead": 21,
     "RSLFROM": 1,
     "RSLTO": 25,
-    "RMAFROM": 1,
-    "RMATO": 18,
-    "thinkingTime": 240,
+    "RMAFROM": 6,
+    "RMATO": 11,
+    "thinkingTime": 3,
     "color": "w"
 }
