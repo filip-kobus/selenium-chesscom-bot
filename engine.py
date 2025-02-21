@@ -15,10 +15,11 @@ class Engine:
         self.board.push(move_obj)
 
     def is_move_possible(self, move):
-        move_obj = chess.Move.from_uci(move)
-        if move_obj in self.board.legal_moves:
-            return True
-        return False
+        try:
+            move_obj = chess.Move.from_uci(move)
+            return move_obj in self.board.legal_moves
+        except ValueError:
+            return False
 
     def get_best_move(self):
         fen = self.board.fen()

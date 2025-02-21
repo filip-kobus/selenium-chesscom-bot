@@ -7,8 +7,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from time import sleep
 import chromedriver_autoinstaller
 
-import chess
-
 class Bot:
     chromedriver_autoinstaller.install()
     PATH = "chromedriver.exe"
@@ -123,8 +121,6 @@ class Bot:
             sleep(0.1)
             pieces = self.get_list_of_pieces()
             if len(self.pieces) != 0:
-                added = self.pieces - pieces
-                removed = pieces - self.pieces
                 move = self.what_move_was_made(self.pieces, pieces)
             self.pieces = pieces
             return move
@@ -190,7 +186,7 @@ class Bot:
         pieces = self.pieces
         current_positions = {piece[16:18] for piece in pieces}
 
-        for piece_type, expected_positions in expected_pieces_positions.items():
+        for _, expected_positions in expected_pieces_positions.items():
             for position in expected_positions:
                 if position not in current_positions:
                     indexes = index_at_fen_castling.get(position, [])
@@ -213,30 +209,56 @@ class Bot:
     def set_my_color(self, color):
         self.my_color = color
 
-    def Move(self, move, colour, mode):
-        ac = ActionChains(self.driver)
-        if mode == "live":
-            elem = self.driver.find_element_by_id("board-layout-chessboard")
-        elif mode == "bot":
-            elem = self.driver.find_element_by_id("board-vs-personalities")
-        size = elem.size["height"]
-        chunk = size/8
-        if colour == "white":
-            clr = white
-        else:
-            clr = black
-        x1 = (chunk * clr[move[0]]) - (chunk / 2)
-        y1 = (chunk * clr[move[1]]) - (chunk / 2)
-        x2 = (chunk * clr[move[2]]) - (chunk / 2)
-        y2 = (chunk * clr[move[3]]) - (chunk / 2)
-        ac.move_to_element_with_offset(elem, x1, y1).click()
-        ac.move_to_element_with_offset(elem, x2, y2).click()
-        ac.perform()
+    def make_move(self, move):
+        coordinates = self.move_to_board_coordinates(move)
 
+        if coordinates is not None:
+            from_x, from_y, to_x, to_y = coordinates
+            board_element = self.driver.find_element(By.XPATH, "//wc-chess-board")
+            ac = ActionChains(self.driver)
+
+            ac.move_to_element_with_offset(board_element, from_x, from_y).click_and_hold().pause(0.2)
+
+            ac.move_to_element_with_offset(board_element, to_x, to_y).release()
+
+            ac.perform()
+
+
+    def move_to_board_coordinates(self, move):
+        board_elements = self.driver.find_elements(By.XPATH, "//wc-chess-board")
+        if len(board_elements) < 1:
+            return None
+
+        board_element = board_elements[0]
+        size = board_element.size
+        width = size['width']
+        cell_size = width / 8
+        cell_middle = int(cell_size / 2)
+
+        translation = {
+            'a': 1, 'b': 2, 'c': 3, 'd': 4,
+            'e': 5, 'f': 6, 'g': 7, 'h': 8
+        }
+
+        move = list(move)
+
+        if self.my_color == "b":
+            from_x = (8 - translation[move[0]]) * cell_size + cell_middle
+            from_y = (int(move[1]) - 1) * cell_size + cell_middle
+            to_x = (8 - translation[move[2]]) * cell_size + cell_middle
+            to_y = (int(move[3]) - 1) * cell_size + cell_middle
+
+        else:
+            from_x = (translation[move[0]] - 1) * cell_size + cell_middle
+            from_y = (8 - int(move[1])) * cell_size + cell_middle
+            to_x = (translation[move[2]] - 1) * cell_size + cell_middle
+            to_y = (8 - int(move[3])) * cell_size + cell_middle
+
+        return from_x, from_y, to_x, to_y
 
 if __name__ == "__main__":
-    bot = Bot(email="", password="")
+    bot = Bot(email="fkobus.coding@gmail.com", password="Krumcia13")
     bot.log_in()
     while True:
-        input()
-        print(bot.get_fen_of_current_state())
+        move = input()
+        bot.make_move(move)

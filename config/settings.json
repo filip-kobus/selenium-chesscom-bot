@@ -4,11 +4,11 @@
     "AutoMove": true,
     "RThinkingTime": false,
     "StockFishlevel": 25,
-    "MovesAhead": 21,
+    "MovesAhead": 24,
     "RSLFROM": 1,
     "RSLTO": 25,
     "RMAFROM": 6,
     "RMATO": 11,
-    "thinkingTime": 3,
-    "color": "w"
+    "thinkingTime": 0,
+    "color": "b"
 }
