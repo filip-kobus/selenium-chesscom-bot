@@ -90,6 +90,15 @@ class Bot:
             ac.move_to_element_with_offset(board_element, from_x, from_y).click()
             ac.move_to_element_with_offset(board_element, to_x, to_y).click()
             ac.perform()
+        else:
+            return
+        if len(move) == 5:
+            promotion_piece = self.color + move[4]
+            promotion_piece_xpath = f"//div[contains(@class, 'promotion-piece') and contains(@class, '{promotion_piece}')]"
+            try:
+                WebDriverWait(self.driver, 2).until(EC.presence_of_element_located((By.XPATH, promotion_piece_xpath))).click()
+            except Exception:
+                pass
 
     def move_to_board_coordinates(self, move, board_element):
         size = board_element.size
