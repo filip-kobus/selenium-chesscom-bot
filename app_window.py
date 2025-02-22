@@ -1,14 +1,9 @@
-import sys, os, json
+import json
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from bot import Bot
-from engine import Engine
-from time import sleep
-from random import randint
-import win32.lib.win32con as win32con
-import win32gui
-from app import Ui_MainWindow
+from Ui_MainWindow import Ui_MainWindow
 from bot_worker import BotWorker
 from login_worker import LoginWorker
 
@@ -88,22 +83,20 @@ class MainWindow(QMainWindow):
         with open(self.USER_FILE, "w") as f:
             json.dump(user_data, f, indent=4)
 
-        self.initialize_bot(email, password)
-
-    def initialize_bot(self, email, password, auto_login=True):
         self.ui.stackedWidget.setCurrentWidget(self.ui.LoadingPage)
-
-        worker = LoginWorker(email=email, password=password, auto_login=auto_login)
-        worker.signals.finished.connect(self.on_bot_initialized)
+        worker = LoginWorker(email, password)
+        worker.signals.finished.connect(self.on_logged_in)
 
         QThreadPool.globalInstance().start(worker)
 
-    def on_bot_initialized(self, bot):
+    def on_logged_in(self, bot):
         self.bot = bot
         self.ui.stackedWidget.setCurrentWidget(self.ui.SettingsPage)
 
     def manual_login(self):
-        self.initialize_bot("", "", auto_login=False)
+        self.bot = Bot()
+        self.bot.open_page()
+        self.ui.stackedWidget.setCurrentWidget(self.ui.SettingsPage)
 
     def check_if_remeber(self):
         with open(self.USER_FILE, 'r') as f:
@@ -150,14 +143,14 @@ class MainWindow(QMainWindow):
         eGame.setIcon(QMessageBox.Information)
         eGame.about(self.ui.stackedWidget, "ERROR", "Bot crashed, start again")
 
-    def show_move(self, move):
-        self.ui.moveLabel.setText(move)
-
     def not_in_game_exception(self):
         eGame = QMessageBox()
         eGame.setIcon(QMessageBox.Information)
         eGame.about(self.ui.stackedWidget, "ERROR", "You are not in game, start the game to run bot")
         self.back_to_settings_page()
+        
+    def show_move(self, move):
+        self.ui.moveLabel.setText(move)
 
     def show_time_to_move(self, time):
         if time > 0:
@@ -176,8 +169,5 @@ class MainWindow(QMainWindow):
         self.main_win.show()
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    main_win = MainWindow()
-    main_win.show()
-    sys.exit(app.exec_())
+    pass
 

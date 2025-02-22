@@ -6,16 +6,15 @@ class WorkerSignals(QObject):
 
 class LoginWorker(QRunnable):
 
-    def __init__(self, email="", password="", auto_login=True):
+    def __init__(self, email, password):
         super().__init__()
         self.email = email
         self.password = password
-        self.is_autologin = auto_login
         self.signals = WorkerSignals()
 
     def run(self):
-        bot = Bot(email=self.email, password=self.password)
-        if self.is_autologin:
-            bot.log_in()
+        bot = Bot()
+        bot.open_page()
+        bot.log_in(self.email, self.password)
         self.signals.finished.emit(bot)
 

@@ -21,7 +21,7 @@ class BotWorker(QThread):
         self.signals = WorkerSignals()
         self.timer_worker = None
         self.load_settings(settings)
-        self.signals.terminate_signal.connect(self.stop)
+        self.signals.terminate_signal.connect(self.terminate)
 
     def load_settings(self, settings):
         self.settings = settings
@@ -52,7 +52,7 @@ class BotWorker(QThread):
 
     def run_bot(self):
         self.engine = Engine(self.stockfishlevel)
-        self.initialize_bot()
+        self.initialize_session()
         
         while not self.bot.is_game_over():
             if not self.running:
@@ -75,12 +75,7 @@ class BotWorker(QThread):
                     self.signals.move_signal.emit("...")
             QThread.msleep(100)
 
-    def stop_timer(self):
-        if self.timer_worker is not None:
-            self.timer_worker.signals.countdown_stopped.emit()
-            self.timer_worker = None
-
-    def initialize_bot(self):
+    def initialize_session(self):
         self.signals.time_to_move_signal.emit(-1)
         self.color = self.bot.get_player_color()
         self.update_board_state()
@@ -93,15 +88,15 @@ class BotWorker(QThread):
         fen = self.bot.get_board_fen()
         self.engine.load_board(fen)
 
-    def make_automove(self):
-        self.bot.make_move(self.best_move)
-        self.is_automove_pending = False
-
     def make_move(self):
         self.best_move = self.engine.get_best_move()
         self.signals.move_signal.emit(self.best_move)
         if self.isAutomove:
             self.start_timer()
+
+    def make_automove(self):
+        self.bot.make_move(self.best_move)
+        self.is_automove_pending = False
 
     def start_timer(self):
         time_to_move = self.get_time_to_move()
@@ -112,6 +107,11 @@ class BotWorker(QThread):
         self.timer_worker.signals.automove_request.connect(self.on_automove_request)
 
         QThreadPool.globalInstance().start(self.timer_worker)
+
+    def stop_timer(self):
+        if self.timer_worker is not None:
+            self.timer_worker.signals.countdown_stopped.emit()
+            self.timer_worker = None
 
     def on_automove_request(self):
         self.is_automove_pending = True
@@ -127,11 +127,10 @@ class BotWorker(QThread):
         return self.stockfishlevel
     
     def get_time_to_move(self):
-        time = self.thinkingtime
         if self.isRTT:
             low, high = sorted((self.rtt_from, self.rtt_to))
             return random.randint(low, high)
-        return time
+        return self.thinkingtime
 
     def emit_time_to_move(self, time):
         self.signals.time_to_move_signal.emit(time)
@@ -140,8 +139,5 @@ class BotWorker(QThread):
         self.timer_worker = None
         self.signals.time_to_move_signal.emit(-1)
 
-    def get_bot(self):
-        return self.bot
-
-    def stop(self):
+    def terminate(self):
         self.running = False
