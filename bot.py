@@ -44,7 +44,7 @@ class Bot:
 
     def get_board_fen(self):
         fen = self.driver.execute_script("""
-            return document.querySelector("wc-chess-board").game.fen;
+            return document.querySelector("wc-chess-board").game.getFEN();
         """)
         return fen
 
@@ -59,12 +59,12 @@ class Bot:
 
     def is_game_over(self):
        return self.driver.execute_script("""
-            return document.querySelector("wc-chess-board").state.isGameOver;
+            return document.querySelector("wc-chess-board").game.isGameOver();
         """)
 
     def is_in_game(self):
         mode = self.driver.execute_script("""
-            return document.querySelector("wc-chess-board").state.mode;
+            return document.querySelector("wc-chess-board").game.getMode().name;
         """)
         if mode == "playing":
             return True
@@ -72,7 +72,7 @@ class Bot:
     
     def get_player_color(self):
         color = self.driver.execute_script("""
-            return document.querySelector("wc-chess-board").state.playingAs;
+            return document.querySelector("wc-chess-board").game.getPlayingAs();
         """)
         if color == 1:
             self.color = 'w'
