@@ -3,8 +3,8 @@ import chess
 
 class Engine:
     STOCKFISH_PATH="config\stockfish.exe"
-    def __init__(self, stockfish_level=20, moves_ahead=12):
-        self.stockfish = Stockfish(self.STOCKFISH_PATH, parameters={'Move Overhead':stockfish_level, "Skill Level": moves_ahead})
+    def __init__(self, stockfish_level=20):
+        self.stockfish = Stockfish(self.STOCKFISH_PATH, parameters={"Skill Level": stockfish_level})
         self.board = chess.Board()
 
     def load_board(self, fen):
@@ -24,13 +24,12 @@ class Engine:
     def get_best_move(self):
         fen = self.board.fen()
         self.stockfish.set_fen_position(fen)
-        move = self.stockfish.get_best_move_time(500)
+        move = self.stockfish.get_best_move()
         return move
 
-    def change_parameters(self, stockfish_level, move_overhead):
+    def change_parameters(self, stockfish_level):
         self.stockfish.update_engine_parameters({
-            'Skill Level': stockfish_level,
-            'Move Overhead': move_overhead
+            'Skill Level': stockfish_level
         })
 
     def whose_move_is(self):

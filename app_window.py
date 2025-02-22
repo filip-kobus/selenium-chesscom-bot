@@ -43,24 +43,20 @@ class MainWindow(QMainWindow):
             settings = json.load(f)
 
         self.ui.Rstockfishlevelcheck.setChecked(bool(settings["Rstockfishlevelcheck"]))
-        self.ui.Rmovesaheadcheck.setChecked(bool(settings["Rmovesaheadcheck"]))
         self.ui.AutoMove.setChecked(bool(settings["AutoMove"]))
-        self.ui.RThinkingTime.setChecked(bool(settings["RThinkingTime"]))
+        self.ui.Rthinkingtimecheck.setChecked(bool(settings["RThinkingTime"]))
 
         self.ui.StockFishlevel.setSliderPosition(int(settings["StockFishlevel"]))
         self.ui.levelLabel.setText(str(settings["StockFishlevel"]))
-        self.ui.MovesAhead.setSliderPosition(int(settings["MovesAhead"]))
-        self.ui.movesLabel.setText(str(settings["MovesAhead"]))
 
         self.ui.RSLFROM.setValue(int(settings["RSLFROM"]))
         self.ui.RSLTO.setValue(int(settings["RSLTO"]))
-        self.ui.RMAFROM.setValue(int(settings["RMAFROM"]))
-        self.ui.RMATO.setValue(int(settings["RMATO"]))
+        self.ui.RTTFROM.setValue(int(settings["RTTFROM"]))
+        self.ui.RTTTO.setValue(int(settings["RTTTO"]))
         self.ui.thinkingTime.setSliderPosition(int(settings["thinkingTime"]))
         self.ui.thinkingLabel.setText(str(settings["thinkingTime"]))
 
     def configure_sliders(self):
-        self.ui.MovesAhead.valueChanged['int'].connect(self.ui.movesLabel.setNum)
         self.ui.StockFishlevel.valueChanged['int'].connect(self.ui.levelLabel.setNum)
         self.ui.thinkingTime.valueChanged['int'].connect(self.ui.thinkingLabel.setNum)
         self.ui.moveLabel.setText("")
@@ -119,25 +115,16 @@ class MainWindow(QMainWindow):
         return False
 
     def save_settings(self):
-        if self.ui.whiteButton.isChecked():
-            color = "w"
-        else:
-            color = "b"
-        self.bot.set_color(color)
-
         settings = {
             "Rstockfishlevelcheck": self.ui.Rstockfishlevelcheck.isChecked(),
-            "Rmovesaheadcheck": self.ui.Rmovesaheadcheck.isChecked(),
             "AutoMove": self.ui.AutoMove.isChecked(),
-            "RThinkingTime": self.ui.RThinkingTime.isChecked(),
+            "RThinkingTime": self.ui.Rthinkingtimecheck.isChecked(),
             "StockFishlevel": self.ui.StockFishlevel.value(),
-            "MovesAhead": self.ui.MovesAhead.value(),
             "RSLFROM": self.ui.RSLFROM.value(),
             "RSLTO": self.ui.RSLTO.value(),
-            "RMAFROM": self.ui.RMAFROM.value(),
-            "RMATO": self.ui.RMATO.value(),
-            "thinkingTime": self.ui.thinkingTime.value(),
-            "color": color
+            "RTTFROM": self.ui.RTTFROM.value(),
+            "RTTTO": self.ui.RTTTO.value(),
+            "thinkingTime": self.ui.thinkingTime.value()
         }
 
         with open(self.SETTINGS, 'w') as f:
@@ -147,7 +134,7 @@ class MainWindow(QMainWindow):
 
     def start_bot(self):
         settings = self.save_settings()
-        if not self.bot.is_in_game() or self.bot.has_game_ended():
+        if not self.bot.is_in_game() or self.bot.is_game_over():
             self.not_in_game_exception()
             return
         self.ui.stackedWidget.setCurrentWidget(self.ui.GamePage)

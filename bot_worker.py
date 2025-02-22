@@ -27,21 +27,17 @@ class BotWorker(QThread):
         self.settings = settings
 
         self.isRSL = settings.get("Rstockfishlevelcheck", False)
-        self.isRMA = settings.get("Rmovesaheadcheck", False)
         self.isAutomove = settings.get("AutoMove", False)
         self.isRTT = settings.get("RThinkingTime", False)
 
         self.stockfishlevel = settings.get("StockFishlevel", 1)
-        self.movesahead = settings.get("MovesAhead", 1)
         self.thinkingtime = settings.get("thinkingTime", 0)
 
         self.rsl_from = settings.get("RSLFROM", 1)
         self.rsl_to = settings.get("RSLTO", 20)
-        self.rma_from = settings.get("RMAFROM", 1)
-        self.rma_to = settings.get("RMATO", 20)
 
-        self.color = settings.get("color", "w")
-        self.bot.set_my_color(self.color)
+        self.rtt_from = settings.get("RTTFROM", 1)
+        self.rtt_to = settings.get("RTTTO", 20)
 
     def run(self):
         try:
@@ -55,36 +51,24 @@ class BotWorker(QThread):
             self.signals.end_signal.emit()
 
     def run_bot(self):
-        self.engine = Engine(self.stockfishlevel, self.movesahead)
+        self.engine = Engine(self.stockfishlevel)
         self.initialize_bot()
-        self.emit_time_to_move(-1)
-
-        while not self.bot.has_game_ended():
+        
+        while not self.bot.is_game_over():
             if not self.running:
                 break
 
             if self.is_automove_pending:
-                self.bot.make_move(self.best_move)
-                self.is_automove_pending = False
+                self.make_automove()
 
-            try:
-                move = self.bot.has_anyone_moved()
-            except ValueError:
-                move = " "
-
-            if move is not None:
-                self.signals.move_signal.emit("...")
+            if self.bot.has_anyone_moved():
                 self.stop_timer()
-                
-                if self.engine.is_move_possible(move):
-                    self.engine.push_move(move)
-                else:
-                    self.update_board_state()
-
+            
+                self.update_board_state()
                 color = self.engine.whose_move_is()
                 
                 if color == self.color :
-                    if self.isRSL or self.isRMA:
+                    if self.isRSL:
                         self.change_engine_parameters()
                     self.make_move()
                 else:
@@ -94,10 +78,11 @@ class BotWorker(QThread):
     def stop_timer(self):
         if self.timer_worker is not None:
             self.timer_worker.signals.countdown_stopped.emit()
-            self.emit_time_to_move(-1)
             self.timer_worker = None
 
     def initialize_bot(self):
+        self.signals.time_to_move_signal.emit(-1)
+        self.color = self.bot.get_player_color()
         self.update_board_state()
         color = self.engine.whose_move_is()
         self.signals.move_signal.emit("...")
@@ -105,8 +90,12 @@ class BotWorker(QThread):
             self.make_move()
     
     def update_board_state(self):
-        fen = self.bot.get_fen_of_current_state()
+        fen = self.bot.get_board_fen()
         self.engine.load_board(fen)
+
+    def make_automove(self):
+        self.bot.make_move(self.best_move)
+        self.is_automove_pending = False
 
     def make_move(self):
         self.best_move = self.engine.get_best_move()
@@ -129,25 +118,19 @@ class BotWorker(QThread):
 
     def change_engine_parameters(self):
         stockfish_level = self.get_stockfish_level()
-        moves_overhead = self.get_moves_overhead() 
-        self.engine.change_parameters(stockfish_level, moves_overhead)
+        self.engine.change_parameters(stockfish_level)
 
     def get_stockfish_level(self):
         if self.isRSL:
             low, high = sorted((self.rsl_from, self.rsl_to))
             return random.randint(low, high)
         return self.stockfishlevel
-
-    def get_moves_overhead(self):
-        if self.isRMA:
-            low, high = sorted((self.rma_from, self.rma_to))
-            return random.randint(low, high)
-        return self.movesahead
     
     def get_time_to_move(self):
         time = self.thinkingtime
         if self.isRTT:
-            time = random.randint(0, time)
+            low, high = sorted((self.rtt_from, self.rtt_to))
+            return random.randint(low, high)
         return time
 
     def emit_time_to_move(self, time):
@@ -155,6 +138,7 @@ class BotWorker(QThread):
 
     def on_countdown_finished(self):
         self.timer_worker = None
+        self.signals.time_to_move_signal.emit(-1)
 
     def get_bot(self):
         return self.bot

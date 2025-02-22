@@ -2,27 +2,31 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
-from engine import Engine
 from selenium.webdriver.common.action_chains import ActionChains
-from time import sleep
 import chromedriver_autoinstaller
+
+
+class XPATHS:
+    email = "//input[@type='email']"
+    password = "//input[@type='password']"
+    login_button = "//button[@type='submit']"
+    in_game_indicator = "//wc-chess-board[contains(@class, 'board')]"
+
 
 class Bot:
     chromedriver_autoinstaller.install()
     PATH = "chromedriver.exe"
     URL = "https://www.chess.com/pl/login"
 
-    def __init__(self, url=URL, password="", email="", player_color="w"):
+    def __init__(self, url=URL, password="", email=""):
         self.password = password
         self.email = email
         self.url = url
         self.driver = webdriver.Chrome(self.PATH)
         self.card = self.driver.get(self.url)
         self.driver.maximize_window()
-        self.previous_pieces = set()
-        self.current_pieces = set()
-        self.castling_availability_fen = "KQkq"
-        self.my_color = player_color
+        self.current_move = None
+        self.color = None
 
     def log_in(self):
         try:
@@ -32,204 +36,62 @@ class Bot:
         except Exception:
             print("Unable to log in. Do it manually.")
 
-    def set_color(self, color):
-        self.my_color = color
-
-    def get_fen_of_current_state(self):
-        board = self.get_board()
-        board_fen = self.board_to_fen(board)
-        castling_fen = self.castling_availability_to_fen()
-        color_fen = self.my_color
-        if not self.is_bot():
-            player_clock = self.driver.find_elements(By.XPATH, "//div[contains(@class, 'clock-player-turn')]")
-            if len(player_clock) == 0:
-                raise Exception("You are not in game!")
-            if "white" in player_clock[0].get_attribute("class"):
-                color_fen = "w"
-            else:
-                color_fen = "b"
-        else:
-            color_fen = self.my_color
-        try :
-            if self.has_anyone_moved():
-                return self.get_fen_of_current_state()
-        except ValueError:
-            return self.get_fen_of_current_state()
-        return f"{board_fen} {color_fen} {castling_fen} - 0 1"
-
-    def is_bot(self):
-        bot = self.driver.find_elements(By.XPATH, "//wc-chess-board[@id='board-play-computer']")
-        if len(bot) > 0:
-            return True
-        return False
-
-    def is_in_game(self):
+    def is_on_board(self):
         in_game = self.driver.find_elements(By.XPATH, "//wc-chess-board[contains(@class, 'board')]")
         if len(in_game) > 0:
             return True
         return False
 
-    def has_game_ended(self):
-        c1 = bool(self.driver.find_elements(By.XPATH, "//span[contains(@class, 'undo')]"))
-        c2 = bool(self.driver.find_elements(By.XPATH, "//span[contains(@class, 'redo')]"))
-        return c1 or c2
-
-    def get_board(self):
-        # pieces in format "piece br square-88"
-        board = [[" " for _ in range(8)] for _ in range(8)]
-        pieces = self.get_list_of_pieces()
-        for piece in pieces:
-            piece_info = piece.split(" ")
-            piece_info.sort(key=len)
-
-            piece_name = piece_info[0]
-            color = piece_name[0]
-            figure = piece_name[1]
-
-            piece_postion = piece_info[2].split("-")[1]
-            column = int(piece_postion[0]) - 1
-            row = int(piece_postion[1]) - 1
-            board[7-row][column] = figure if color == 'b' else figure.upper()
-        return board
-
-    def board_to_fen(self, board):
-        fen_rows = []
-
-        for row in board:
-            empty_count = 0
-            fen_row = ""
-            for cell in row:
-                if cell == " ":
-                    empty_count += 1
-                else:
-                    if empty_count > 0:
-                        fen_row += str(empty_count)
-                        empty_count = 0
-                    fen_row += cell
-            if empty_count > 0:
-                fen_row += str(empty_count)
-            fen_rows.append(fen_row)
-    
-        fen_board = "/".join(fen_rows)
-
-        return fen_board
+    def get_board_fen(self):
+        fen = self.driver.execute_script("""
+            return document.querySelector("wc-chess-board").game.fen;
+        """)
+        return fen
 
     def has_anyone_moved(self):
-        move = None
-        pieces = self.get_list_of_pieces()
-        if pieces != self.pieces:
-            sleep(0.1)
-            pieces = self.get_list_of_pieces()
-            if len(self.pieces) != 0:
-                move = self.what_move_was_made(self.pieces, pieces)
-            self.pieces = pieces
-            return move
-        return move
+        current_move = self.driver.execute_script("""
+            return document.querySelector("wc-chess-board").game.getLastMove();
+        """)
+        if current_move != self.current_move:
+            self.current_move = current_move
+            return True
+        return False
+
+    def is_game_over(self):
+       return self.driver.execute_script("""
+            return document.querySelector("wc-chess-board").state.isGameOver;
+        """)
+
+    def is_in_game(self):
+        mode = self.driver.execute_script("""
+            return document.querySelector("wc-chess-board").state.mode;
+        """)
+        if mode == "playing":
+            return True
+        return False
     
-    def what_move_was_made(self, previous_pieces, next_pieces):
-        added_pieces = list(next_pieces - previous_pieces)
-        removed_pieces = list(previous_pieces - next_pieces)
-
-        if len(added_pieces) + len(removed_pieces) != 2:
-            raise ValueError
-
-        added = added_pieces[0].split()
-        
-        added.sort(key=len)
-        figure = added[0]
-        for piece in removed_pieces:
-            piece_info = piece.split()
-            piece_info.sort(key=len)
-            if piece_info[0] == figure:
-                removed = piece_info
-        
-        move_to = added[2].split("-")[1]
-        move_from = removed[2].split("-")[1]
-
-        return self.board_notation_to_algebraic(move_from, move_to)
-
-
-    def board_notation_to_algebraic(self, move_from, move_to):
-        translation = {
-        '1': 'a', '2': 'b', '3': 'c', '4': 'd',
-        '5': 'e', '6': 'f', '7': 'g', '8': 'h'
-        }
-        return f"{translation[move_from[0]]}{move_from[1]}{translation[move_to[0]]}{move_to[1]}"
-        
-    def is_begining_of_game(self):
-        pieces = self.pieces
-        for piece in pieces:
-            row = int(piece[-1])
-            if 2 < row < 7:
-                return False
-        return True
-
-    def castling_availability_to_fen(self):
-        expected_pieces_positions = {
-            "bk":("58",),
-            "br":("18", "88"),
-            "wk":("51",),
-            "wr":("11", "81")
-        }
-
-        fen_castling = list("KQkq")
-        index_at_fen_castling = {
-            "81":[0],
-            "11":[1],
-            "88":[2],
-            "18":[3],
-            "58":[2,3],
-            "51":[0,1]
-        }
-        
-        self.pieces = self.get_list_of_pieces()
-        pieces = self.pieces
-        current_positions = {piece[16:18] for piece in pieces}
-
-        for _, expected_positions in expected_pieces_positions.items():
-            for position in expected_positions:
-                if position not in current_positions:
-                    indexes = index_at_fen_castling.get(position, [])
-                    for index in indexes:
-                        fen_castling[index] = ''
-
-        result = "".join(fen_castling)
-        return result if result else "-"
-
-    def get_list_of_pieces(self):
-        pieces_info = self.driver.find_elements(By.XPATH, "//div[contains(concat(' ', normalize-space(@class), ' '), ' piece ')]")
-        pieces = set()
-        if len(pieces_info) > 0:         
-            for element in pieces_info:
-                piece = element.get_attribute("class").removesuffix(" dragging")
-                if piece != "element-pool":
-                    pieces.add(piece)
-        return pieces
-
-    def set_my_color(self, color):
-        self.my_color = color
+    def get_player_color(self):
+        color = self.driver.execute_script("""
+            return document.querySelector("wc-chess-board").state.playingAs;
+        """)
+        if color == 1:
+            self.color = 'w'
+        else:
+            self.color = 'b'
+        return self.color
 
     def make_move(self, move):
-        coordinates = self.move_to_board_coordinates(move)
-
+        board_element = self.driver.find_element(By.XPATH, "//wc-chess-board")
+        coordinates = self.move_to_board_coordinates(move, board_element)
         if coordinates is not None:
             from_x, from_y, to_x, to_y = coordinates
-            board_element = self.driver.find_element(By.XPATH, "//wc-chess-board")
             ac = ActionChains(self.driver)
 
-            ac.move_to_element_with_offset(board_element, from_x, from_y).click_and_hold().pause(0.2)
-
-            ac.move_to_element_with_offset(board_element, to_x, to_y).release()
-
+            ac.move_to_element_with_offset(board_element, from_x, from_y).click()
+            ac.move_to_element_with_offset(board_element, to_x, to_y).click()
             ac.perform()
 
-
-    def move_to_board_coordinates(self, move):
-        board_elements = self.driver.find_elements(By.XPATH, "//wc-chess-board")
-        if len(board_elements) < 1:
-            return None
-
-        board_element = board_elements[0]
+    def move_to_board_coordinates(self, move, board_element):
         size = board_element.size
         width = size['width']
         cell_size = width / 8
@@ -242,7 +104,7 @@ class Bot:
 
         move = list(move)
 
-        if self.my_color == "b":
+        if self.color == 'b':
             from_x = (8 - translation[move[0]]) * cell_size + cell_middle
             from_y = (int(move[1]) - 1) * cell_size + cell_middle
             to_x = (8 - translation[move[2]]) * cell_size + cell_middle
@@ -257,8 +119,4 @@ class Bot:
         return from_x, from_y, to_x, to_y
 
 if __name__ == "__main__":
-    bot = Bot(email="fkobus.coding@gmail.com", password="Krumcia13")
-    bot.log_in()
-    while True:
-        move = input()
-        bot.make_move(move)
+    pass

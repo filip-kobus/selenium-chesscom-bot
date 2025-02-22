@@ -13,17 +13,17 @@ class TimerWorker(QRunnable):
         self.time = time
         self.signals = WorkerSignals()
         self.signals.countdown_stopped.connect(self.stop)
-        self.running = True 
+        self.running = True
 
     def run(self):
-        for remaining in range(self.time, -1, -1):
+        for remaining in range(self.time, 0, -1):
             if not self.running:
                 self.signals.countdown_finished.emit()
                 return
             self.signals.update_countdown.emit(remaining)
             time.sleep(1)
-        self.signals.automove_request.emit()
         self.signals.countdown_finished.emit()
+        self.signals.automove_request.emit()
 
     def stop(self):
         self.running = False

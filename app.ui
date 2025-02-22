@@ -357,71 +357,40 @@ just log in manually on page</string>
      <widget class="QWidget" name="gridLayoutWidget_2">
       <property name="geometry">
        <rect>
-        <x>70</x>
-        <y>140</y>
-        <width>321</width>
-        <height>81</height>
+        <x>80</x>
+        <y>200</y>
+        <width>331</width>
+        <height>41</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="1" column="1">
-        <widget class="QScrollBar" name="MovesAhead">
-         <property name="minimumSize">
-          <size>
-           <width>156</width>
-           <height>0</height>
-          </size>
-         </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_5">
          <property name="font">
           <font>
-           <pointsize>10</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
-         <property name="minimum">
-          <number>1</number>
-         </property>
-         <property name="maximum">
-          <number>30</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+         <property name="text">
+          <string>Stockfish level</string>
          </property>
         </widget>
        </item>
        <item row="0" column="1">
         <widget class="QScrollBar" name="StockFishlevel">
+         <property name="font">
+          <font>
+           <pointsize>72</pointsize>
+          </font>
+         </property>
          <property name="minimum">
           <number>1</number>
          </property>
          <property name="maximum">
-          <number>25</number>
+          <number>20</number>
          </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_4">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Moves ahead</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_5">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Stockfish level</string>
          </property>
         </widget>
        </item>
@@ -430,64 +399,25 @@ just log in manually on page</string>
      <widget class="QWidget" name="gridLayoutWidget_3">
       <property name="geometry">
        <rect>
-        <x>70</x>
-        <y>220</y>
-        <width>321</width>
-        <height>71</height>
+        <x>80</x>
+        <y>240</y>
+        <width>331</width>
+        <height>51</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
-       <item row="2" column="0">
-        <widget class="QCheckBox" name="Rmovesaheadcheck">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Random moves ahead</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="3">
-        <widget class="QLabel" name="label_7">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>-</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="2">
         <widget class="QSpinBox" name="RSLFROM">
          <property name="font">
           <font>
-           <pointsize>10</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="minimum">
           <number>1</number>
          </property>
          <property name="maximum">
-          <number>24</number>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="4">
-        <widget class="QSpinBox" name="RMATO">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="minimum">
-          <number>2</number>
-         </property>
-         <property name="maximum">
-          <number>30</number>
+          <number>20</number>
          </property>
         </widget>
        </item>
@@ -495,26 +425,14 @@ just log in manually on page</string>
         <widget class="QSpinBox" name="RSLTO">
          <property name="font">
           <font>
-           <pointsize>10</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="minimum">
           <number>2</number>
          </property>
          <property name="maximum">
-          <number>25</number>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QCheckBox" name="Rstockfishlevelcheck">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Random Stockfish level</string>
+          <number>20</number>
          </property>
         </widget>
        </item>
@@ -522,26 +440,11 @@ just log in manually on page</string>
         <widget class="QLabel" name="label_6">
          <property name="font">
           <font>
-           <pointsize>10</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="text">
           <string>-</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="2">
-        <widget class="QSpinBox" name="RMAFROM">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="minimum">
-          <number>1</number>
-         </property>
-         <property name="maximum">
-          <number>29</number>
          </property>
         </widget>
        </item>
@@ -558,43 +461,31 @@ just log in manually on page</string>
          </property>
         </spacer>
        </item>
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="Rstockfishlevelcheck">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Random Stockfish level</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="gridLayoutWidget_4">
       <property name="geometry">
        <rect>
-        <x>70</x>
+        <x>80</x>
         <y>290</y>
-        <width>321</width>
-        <height>61</height>
+        <width>331</width>
+        <height>81</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0">
-        <widget class="QCheckBox" name="AutoMove">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>AutoMove</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_8">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Thinking time</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
+       <item row="2" column="1">
         <widget class="QScrollBar" name="thinkingTime">
          <property name="font">
           <font>
@@ -606,6 +497,30 @@ just log in manually on page</string>
          </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_8">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Thinking time</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QCheckBox" name="AutoMove">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>AutoMove</string>
          </property>
         </widget>
        </item>
@@ -632,33 +547,15 @@ just log in manually on page</string>
      <widget class="QLabel" name="levelLabel">
       <property name="geometry">
        <rect>
-        <x>400</x>
-        <y>160</y>
+        <x>420</x>
+        <y>210</y>
         <width>31</width>
         <height>16</height>
        </rect>
       </property>
       <property name="font">
        <font>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>0</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="movesLabel">
-      <property name="geometry">
-       <rect>
-        <x>400</x>
-        <y>190</y>
-        <width>31</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
+        <pointsize>12</pointsize>
        </font>
       </property>
       <property name="text">
@@ -668,95 +565,97 @@ just log in manually on page</string>
      <widget class="QLabel" name="thinkingLabel">
       <property name="geometry">
        <rect>
-        <x>400</x>
-        <y>330</y>
+        <x>420</x>
+        <y>340</y>
         <width>31</width>
         <height>16</height>
        </rect>
       </property>
       <property name="font">
        <font>
-        <pointsize>10</pointsize>
+        <pointsize>12</pointsize>
        </font>
       </property>
       <property name="text">
        <string>0</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="RThinkingTime">
+     <widget class="QWidget" name="gridLayoutWidget_5">
       <property name="geometry">
        <rect>
-        <x>70</x>
-        <y>360</y>
-        <width>266</width>
-        <height>25</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Random time (0 - Thinking time)</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_9">
-      <property name="geometry">
-       <rect>
-        <x>120</x>
-        <y>400</y>
-        <width>261</width>
+        <x>80</x>
+        <y>370</y>
+        <width>331</width>
         <height>41</height>
        </rect>
       </property>
-      <property name="font">
-       <font>
-        <pointsize>14</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>Choose your figures color:</string>
-      </property>
-     </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>170</x>
-        <y>440</y>
-        <width>160</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QRadioButton" name="whiteButton">
+      <layout class="QGridLayout" name="gridLayout_5">
+       <item row="0" column="2">
+        <widget class="QSpinBox" name="RTTFROM">
          <property name="font">
           <font>
-           <pointsize>10</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
-         <property name="text">
-          <string>White</string>
+         <property name="minimum">
+          <number>0</number>
          </property>
-         <property name="checked">
-          <bool>true</bool>
+         <property name="maximum">
+          <number>240</number>
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="QRadioButton" name="blackButton">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="Rthinkingtimecheck">
          <property name="font">
           <font>
-           <pointsize>10</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>Black</string>
+          <string>Random Thinking Time</string>
          </property>
         </widget>
+       </item>
+       <item row="0" column="4">
+        <widget class="QSpinBox" name="RTTTO">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>240</number>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QLabel" name="label_7">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>-</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
