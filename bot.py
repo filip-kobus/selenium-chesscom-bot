@@ -32,12 +32,11 @@ class Scripts:
         """
 
 class Bot:
-    PATH = "chromedriver.exe"
-    URL = "https://www.chess.com/pl/login"
+    URL = "https://www.chess.com/login"
 
     def __init__(self):
         chromedriver_autoinstaller.install()
-        self.driver = webdriver.Chrome(self.PATH)
+        self.driver = webdriver.Chrome()
         self.xpaths = Xpaths
         self.scripts = Scripts
         self.current_move = None
