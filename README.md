@@ -35,7 +35,6 @@ selenium-chesscom-bot/
 │   ├── login_worker.py          # Manages login process
 │   ├── timer_worker.py          # Handles countdown timer
 │
-│── venv/                        # Virtual environment
 │── README.md                    # Documentation
 │── requirements.txt             # Python dependencies
 ├── main.py                      # Entry point
