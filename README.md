@@ -37,8 +37,8 @@ selenium-chesscom-bot/
 │
 │── venv/                        # Virtual environment
 │── README.md                    # Documentation
-│── requirements.txt              # Python dependencies
-├── main.py                  # Entry point
+│── requirements.txt             # Python dependencies
+├── main.py                      # Entry point
 ```
 ---
 
