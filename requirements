@@ -1,6 +1,6 @@
 stockfish
-selenium==3.8.1
-chess==1.5.0
+selenium
+chess
 PyQt5
-pywin32==307
+pywin32
 chromedriver_autoinstaller
