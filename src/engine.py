@@ -2,7 +2,7 @@ from stockfish import Stockfish
 import chess
 
 class Engine:
-    STOCKFISH_PATH="config\stockfish.exe"
+    STOCKFISH_PATH="config/stockfish.exe"
     def __init__(self, stockfish_level=20):
         self.stockfish = Stockfish(self.STOCKFISH_PATH, parameters={"Skill Level": stockfish_level})
         self.board = chess.Board()

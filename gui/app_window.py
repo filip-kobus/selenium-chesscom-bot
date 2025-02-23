@@ -2,10 +2,10 @@ import json
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from bot import Bot
-from Ui_MainWindow import Ui_MainWindow
-from bot_worker import BotWorker
-from login_worker import LoginWorker
+from src.bot import Bot
+from gui.Ui_MainWindow import Ui_MainWindow
+from src.bot_worker import BotWorker
+from src.login_worker import LoginWorker
 
 class MainWindow(QMainWindow):
     USER_FILE="config/user.json"

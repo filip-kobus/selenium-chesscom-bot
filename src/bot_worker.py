@@ -1,7 +1,7 @@
 from PyQt5.QtCore import *
-from engine import Engine
+from src.engine import Engine
 import random
-from timer_worker import TimerWorker
+from src.timer_worker import TimerWorker
 import traceback
 
 class WorkerSignals(QObject):

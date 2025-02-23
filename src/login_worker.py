@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QObject, pyqtSignal, QRunnable
-from bot import Bot
+from src.bot import Bot
 
 class WorkerSignals(QObject):
     finished = pyqtSignal(object)
