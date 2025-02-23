@@ -7,11 +7,9 @@ It can log in, play moves automatically, and analyze games using **Stockfish**.
 
 ## 🎯 Features
 
-✅ **Automated Chess.com Gameplay** – Plays chess moves using Stockfish.\
 ✅ **Selenium Web Automation** – Logs in and interacts with the Chess.com board.\
 ✅ **Stockfish Integration** – Uses Stockfish engine for best moves.\
-✅ **Auto-Move Timer** – Configurable countdown for automatic moves.\
-✅ **GUI with PyQt5** – Simple user interface for easy control.
+✅ **GUI with PyQt5** – Simple user interface.\
 
 ---
 
@@ -20,33 +18,28 @@ It can log in, play moves automatically, and analyze games using **Stockfish**.
 ```
 selenium-chesscom-bot/
 │── config/                     # Configuration files
+│   ├── icon.ico                 # Application icon
 │   ├── settings.json            # Bot settings
 │   ├── user.json                # User credentials
 │   ├── stockfish.exe            # Stockfish engine
-│   ├── icon.ico                 # App icon
 │
-│── src/                         # Main source code
-│   ├── main.py                  # Entry point
-│   ├── bot.py                   # Core bot logic
-│   ├── engine.py                # Stockfish engine integration
-│   ├── bot_worker.py            # Handles bot execution
-│   ├── login_worker.py          # Manages login process
-│   ├── timer_worker.py          # Handles countdown timer
-│   ├── selenium_helpers.py      # Utility functions for Selenium
-│
-│── gui/                         # UI-related files
+│── gui/                         # GUI-related files
 │   ├── app_window.py            # GUI logic
 │   ├── Ui_MainWindow.py         # Auto-generated PyQt5 UI code
 │   ├── Ui_MainWindow.ui         # UI design file
 │
-│── tests/                       # Unit and functional tests
+│── src/                         # Main source code
+│   ├── bot_worker.py            # Handles bot execution
+│   ├── bot.py                   # Core bot logic
+│   ├── engine.py                # Stockfish engine integration
+│   ├── login_worker.py          # Manages login process
+│   ├── timer_worker.py          # Handles countdown timer
+│
 │── venv/                        # Virtual environment
-│── requirements.txt             # Python dependencies
 │── README.md                    # Documentation
-│── .gitignore                    # Git ignore settings
-│── start.sh                      # Shell script to start the bot
+│── requirements.txt              # Python dependencies
+├── main.py                  # Entry point
 ```
-
 ---
 
 ## 🛠 Installation
